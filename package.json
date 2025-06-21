@@ -4,7 +4,7 @@
   "name": "paymob-api",
   "version": "1.0.0",
   "main": "server.js",
-  "type": "module",
+  "type": "commonJs",
   "scripts": {
     "start": "node server.js"
 },
