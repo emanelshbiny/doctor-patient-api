@@ -1,25 +1,55 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
 
-dotenv.config();
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Middlewares
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json());
 
-// Test Route
-app.get('/', (req, res) => {
-  res.send('API is working ✅');
+// 🔌 Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("Connected to MongoDB"))
+  .catch(err => console.error("MongoDB connection error:", err));
+
+// 📦 Order Schema
+const Order = mongoose.model("Order", new mongoose.Schema({
+  patient: String,
+  doctor: String,
+  amount: Number,
+  status: String,
+  created_at: { type: Date, default: Date.now }
+}));
+
+// 🔐 Fake token
+let auth_token = "demo_token";
+
+// 🔁 Endpoints
+app.post("/auth/token", (req, res) => {
+  res.json({ success: true, token: auth_token });
 });
 
-// Your other API routes go here
-// For example:
-// app.post('/api/appointments', yourHandlerFunction);
+app.post("/order/create", async (req, res) => {
+  const { patient, doctor, amount } = req.body;
 
-// Listen on correct PORT
-const PORT = process.env.PORT || 8080;
+  const order = new Order({
+    patient,
+    doctor,
+    amount,
+    status: "pending"
+  });
+
+  await order.save();
+  res.json({ success: true, order_id: order._id });
+});
+
+app.get("/orders", async (req, res) => {
+  const orders = await Order.find().sort({ created_at: -1 });
+  res.json(orders);
+});
+
 app.listen(PORT, () => {
-  console.log(`🚀 Paymob Demo API running on port ${PORT}`);
+  console.log(`API with MongoDB running on port ${PORT}`);
 });
